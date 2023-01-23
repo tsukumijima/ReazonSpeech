@@ -69,6 +69,7 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sampl
       speech2text (espnet2.bin.asr.Speech2Text): An audio recognizer (optional)
       output_sample_rate (int): Sample rate of output audio (optional)
       strategy (str): "optim" or "lax" (default: "optim")
+      use_ffmpeg (bool): Use ffmpeg to extract captions (ffmpeg with libaribb24 is required)
 
     Returns:
       A list of Utterance objects
