@@ -1,3 +1,4 @@
+from typing import Literal
 from .utils import load_audio
 from .caption import get_captions
 from .sentence import build_sentences
@@ -50,8 +51,8 @@ def _add_space(utterances):
         u0.end_seconds += blank
         u1.start_seconds -= blank
 
-def get_utterances(path, ctc_segmentation, speech2text=None,
-                   strategy='optim'):
+def get_utterances(path: str, ctc_segmentation, speech2text = None,
+                   strategy: Literal['optim', 'lax'] = 'optim', use_ffmpeg: bool = False):
     """Extract utterances from MPEG-TS data
 
     This function supports two strategies: "optim" or "lax".
@@ -72,7 +73,7 @@ def get_utterances(path, ctc_segmentation, speech2text=None,
       A list of Utterance objects
     """
     samplerate = int(ctc_segmentation.fs)
-    captions = build_sentences(get_captions(path))
+    captions = build_sentences(get_captions(path, use_ffmpeg=use_ffmpeg))
     buffer = load_audio(path, samplerate)
     utterances = []
 

@@ -5,8 +5,8 @@ __all__ = "Caption", "Utterance"
 @dataclass
 class Caption:
     """A caption packet in MPEG-TS."""
-    start_seconds: int
-    end_seconds: int
+    start_seconds: float
+    end_seconds: float
     text: str
 
 @dataclass

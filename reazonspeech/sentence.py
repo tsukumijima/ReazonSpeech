@@ -5,7 +5,7 @@ from .interface import Caption
 
 __all__ = "build_sentences",
 
-_SPECIALS = {ord(x): "" for x in "…〜＜＞♬:→　"}
+_SPECIALS = {ord(x): "" for x in "…〜＜＞《》♬:→　"}
 
 def _cleanup(s):
     """Remove special characters to help sentence splitter"""

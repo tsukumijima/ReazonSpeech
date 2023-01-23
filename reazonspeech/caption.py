@@ -29,9 +29,12 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import datetime
+import subprocess
+from dataclasses import dataclass, field
+from typing import List
 from .encoding import decode_cprofile
 from .interface import Caption
-from dataclasses import dataclass, field
 
 __all__ = "get_captions",
 
@@ -277,16 +280,62 @@ def _captions(fp):
                     state.captions.append((pts, text))
     return state.done()
 
-def get_captions(path):
+def _parse_time_code(time_code: str) -> datetime.timedelta:
+    other, milliseconds = time_code.split(".")
+    hours = 0
+    if len(other.split(":")) == 2:
+        minutes, seconds = other.split(":")
+    else:
+        hours, minutes, seconds = other.split(":")
+    return datetime.timedelta(
+        hours=int(hours),
+        minutes=int(minutes),
+        seconds=int(seconds),
+        milliseconds=int(milliseconds),
+    )
+
+def _parse_webvtt(webvtt: str) -> List[Caption]:
+    """Parse WebVTT Captions."""
+    captions: List[Caption] = []
+    start = None
+    end = None
+    for line in webvtt.splitlines():
+        if line.startswith("WEBVTT"):
+            continue
+        elif line == "":
+            continue
+        elif "-->" in line:
+            # use timedelta to parse time
+            start, end = line.split(" --> ")
+            start = _parse_time_code(start)
+            end = _parse_time_code(end)
+            continue
+        else:
+            if start is not None and end is not None:
+                line = line.replace("〓", "")
+                captions.append(Caption(start.total_seconds(), end.total_seconds(), line))
+                start = None
+                end = None
+    return captions
+
+def get_captions(path: str, use_ffmpeg: bool = False):
     """Read caption from M2TS stream file.
 
     This scans MPEG transport stream to extracts caption packets.
 
     Args:
         path (str): Path to a M2TS file.
+        use_ffmpeg (bool): Use ffmpeg to extract captions. (ffmpeg with libaribb24 is required)
 
     Returns:
         A list of `Caption` instances.
     """
-    with open(path, 'rb') as fp:
-        return _captions(fp)
+    if use_ffmpeg is False:
+        with open(path, "rb") as fp:
+            return _captions(fp)
+    else:
+        # ffmpeg with libaribb24 is required
+        cmd = ["ffmpeg", "-fix_sub_duration", "-i", path, "-c:s", "webvtt", "-f", "webvtt", "-"]
+        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        webvtt = process.stdout.decode("utf-8")
+        return _parse_webvtt(webvtt)
