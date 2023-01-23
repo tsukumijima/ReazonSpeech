@@ -13,7 +13,9 @@ _MARGIN = 25
 
 # CTCSegmentation tends to miss the last syllable.
 # See lumaku/ctc-segmentation#10
-_PADDING = 0.45
+_END_PADDING = 0.45
+
+_START_MINUS_PADDING = 0.3
 
 def _slice(buffer, samplerate, start, end):
     start = int(start * samplerate)
@@ -32,8 +34,8 @@ def _align(buffer, samplerate, caption, ctc_segmentation):
 
     if aligned.segments:
         d0, d1, score = aligned.segments[0]
-        start = t0 + d0
-        end = t0 + d1 + _PADDING
+        start = t0 + d0 - _START_MINUS_PADDING
+        end = t0 + d1 + _END_PADDING
         del aligned
         return Utterance(buffer=None,
                          samplerate=samplerate,
