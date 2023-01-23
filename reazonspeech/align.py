@@ -68,6 +68,7 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None,
       ctc_segmentation (espnet2.bin.asr_align.CTCSegmentation): An audio aligner
       speech2text (espnet2.bin.asr.Speech2Text): An audio recognizer (optional)
       strategy (str): "optim" or "lax" (default: "optim")
+      use_ffmpeg (bool): Use ffmpeg to extract captions (ffmpeg with libaribb24 is required)
 
     Returns:
       A list of Utterance objects
