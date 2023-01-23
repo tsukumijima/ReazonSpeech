@@ -51,8 +51,9 @@ def _add_space(utterances):
         u0.end_seconds += blank
         u1.start_seconds -= blank
 
-def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sample_rate: Optional[int] = None,
-                   strategy: Literal['optim', 'lax'] = 'optim', use_ffmpeg: bool = False):
+def get_utterances(path: str, ctc_segmentation, speech2text = None, audio_path: Optional[str] = None,
+                   output_sample_rate: Optional[int] = None, strategy: Literal['optim', 'lax'] = 'optim',
+                   use_ffmpeg: bool = False):
     """Extract utterances from MPEG-TS data
 
     This function supports two strategies: "optim" or "lax".
@@ -67,6 +68,7 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sampl
       path (str): Path to a M2TS file
       ctc_segmentation (espnet2.bin.asr_align.CTCSegmentation): An audio aligner
       speech2text (espnet2.bin.asr.Speech2Text): An audio recognizer (optional)
+      audio_path (str): Path to a audio file (optional, if not given, path is used)
       output_sample_rate (int): Sample rate of output audio (optional)
       strategy (str): "optim" or "lax" (default: "optim")
       use_ffmpeg (bool): Use ffmpeg to extract captions (ffmpeg with libaribb24 is required)
@@ -74,9 +76,12 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sampl
     Returns:
       A list of Utterance objects
     """
+    if audio_path is None:
+        audio_path = path
+
     samplerate = int(ctc_segmentation.fs)
     captions = build_sentences(get_captions(path, use_ffmpeg=use_ffmpeg))
-    buffer = load_audio(path, samplerate)
+    buffer = load_audio(audio_path, samplerate)
     utterances = []
 
     for caption in captions:
@@ -88,7 +93,7 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sampl
         _add_space(utterances)
 
     if output_sample_rate is not None:
-        buffer = load_audio(path, output_sample_rate)
+        buffer = load_audio(audio_path, output_sample_rate)
         samplerate = output_sample_rate
 
     for utt in utterances:
