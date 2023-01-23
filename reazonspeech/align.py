@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 from .utils import load_audio
 from .caption import get_captions
 from .sentence import build_sentences
@@ -13,7 +13,7 @@ _MARGIN = 25
 
 # CTCSegmentation tends to miss the last syllable.
 # See lumaku/ctc-segmentation#10
-_PADDING = 0.1
+_PADDING = 0.45
 
 def _slice(buffer, samplerate, start, end):
     start = int(start * samplerate)
@@ -51,7 +51,7 @@ def _add_space(utterances):
         u0.end_seconds += blank
         u1.start_seconds -= blank
 
-def get_utterances(path: str, ctc_segmentation, speech2text = None,
+def get_utterances(path: str, ctc_segmentation, speech2text = None, output_sample_rate: Optional[int] = None,
                    strategy: Literal['optim', 'lax'] = 'optim', use_ffmpeg: bool = False):
     """Extract utterances from MPEG-TS data
 
@@ -67,6 +67,7 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None,
       path (str): Path to a M2TS file
       ctc_segmentation (espnet2.bin.asr_align.CTCSegmentation): An audio aligner
       speech2text (espnet2.bin.asr.Speech2Text): An audio recognizer (optional)
+      output_sample_rate (int): Sample rate of output audio (optional)
       strategy (str): "optim" or "lax" (default: "optim")
 
     Returns:
@@ -84,6 +85,10 @@ def get_utterances(path: str, ctc_segmentation, speech2text = None,
 
     if strategy == 'lax':
         _add_space(utterances)
+
+    if output_sample_rate is not None:
+        buffer = load_audio(path, output_sample_rate)
+        samplerate = output_sample_rate
 
     for utt in utterances:
         utt.buffer = _slice(buffer, samplerate, utt.start_seconds, utt.end_seconds)
